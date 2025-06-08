@@ -126,6 +126,7 @@ show_menu() {
     echo -e "${PURPLE}b.${NC} 实时跟踪所有服务日志"
     echo -e "${YELLOW}c.${NC} 重新构建并重启服务"
     echo -e "${YELLOW}d.${NC} 设置 www 目录权限 (www-data)"
+    echo -e "${CYAN}e.${NC} 查看 Docker 网络信息 (Gateway)"
     echo -e "${RED}0.${NC} 退出"
     echo -e "${BLUE}================================${NC}"
 }
@@ -262,6 +263,48 @@ set_www_permissions() {
     fi
 }
 
+# 查看 Docker 网络信息
+show_docker_network_info() {
+    echo -e "\n${YELLOW}正在查看 Docker 网络信息...${NC}"
+
+    # 检查 Docker 是否运行
+    if ! docker info >/dev/null 2>&1; then
+        echo -e "${RED}✗ 错误: Docker 服务未运行${NC}"
+        return 1
+    fi
+
+    echo -e "\n${CYAN}=== Docker 网络信息 ===${NC}"
+
+    # 获取 bridge 网络信息
+    echo -e "${PURPLE}正在检查 bridge 网络...${NC}"
+    local bridge_info=$(docker network inspect bridge 2>/dev/null)
+
+    if [[ $? -eq 0 && -n "$bridge_info" ]]; then
+        # 提取 Gateway 信息
+        local gateway=$(echo "$bridge_info" | grep -A 10 '"IPAM"' | grep '"Gateway"' | head -1 | sed 's/.*"Gateway": *"\([^"]*\)".*/\1/')
+        local subnet=$(echo "$bridge_info" | grep -A 10 '"IPAM"' | grep '"Subnet"' | head -1 | sed 's/.*"Subnet": *"\([^"]*\)".*/\1/')
+
+        echo -e "${GREEN}✓ Bridge 网络信息：${NC}"
+        echo -e "  ${CYAN}Gateway (主机内网地址): ${GREEN}${gateway}${NC}"
+        echo -e "  ${CYAN}Subnet: ${GREEN}${subnet}${NC}"
+
+        # 显示完整的网络信息
+        echo -e "\n${PURPLE}完整的 bridge 网络配置：${NC}"
+        echo "$bridge_info" | jq '.[0] | {Name, Gateway: .IPAM.Config[0].Gateway, Subnet: .IPAM.Config[0].Subnet, Driver}' 2>/dev/null || {
+            echo -e "${YELLOW}注意: 未安装 jq，显示原始 JSON 数据${NC}"
+            echo "$bridge_info"
+        }
+    else
+        echo -e "${RED}✗ 无法获取 bridge 网络信息${NC}"
+    fi
+
+    # 显示所有网络列表
+    echo -e "\n${PURPLE}所有 Docker 网络：${NC}"
+    docker network ls
+
+    echo -e "\n${GREEN}网络信息查看完成！${NC}"
+}
+
 # 重新构建并重启服务
 rebuild_and_restart() {
     echo -e "\n${YELLOW}正在重新构建并重启服务...${NC}"
@@ -311,7 +354,7 @@ check_env_file
 # 主循环
 while true; do
     show_menu
-    echo -n -e "${CYAN}请输入选项 (0-9, a-d): ${NC}"
+    echo -n -e "${CYAN}请输入选项 (0-9, a-e): ${NC}"
     read -r choice
 
     case $choice in
@@ -387,12 +430,15 @@ while true; do
                 set_www_permissions
             fi
             ;;
+        e|E)
+            show_docker_network_info
+            ;;
         0)
             echo -e "\n${GREEN}再见！${NC}"
             exit 0
             ;;
         *)
-            echo -e "\n${RED}无效选项，请输入 0-9, a-d${NC}"
+            echo -e "\n${RED}无效选项，请输入 0-9, a-e${NC}"
             ;;
     esac
 
