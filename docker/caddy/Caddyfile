@@ -1,0 +1,18 @@
+# Docs: https://caddyserver.com/docs/caddyfile
+laravel.test {
+    root * /var/www/html/public
+    php_fastcgi php-fpm:9000
+    file_server
+
+    encode zstd gzip
+    tls internal
+}
+
+:80 {
+    root * /var/www/html/public
+    php_fastcgi php-fpm:9000
+    file_server
+
+    encode zstd gzip
+    tls internal
+}
