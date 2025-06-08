@@ -125,6 +125,7 @@ show_menu() {
     echo -e "${PURPLE}a.${NC} 查看 Caddy 日志 (最近100行)"
     echo -e "${PURPLE}b.${NC} 实时跟踪所有服务日志"
     echo -e "${YELLOW}c.${NC} 重新构建并重启服务"
+    echo -e "${YELLOW}d.${NC} 设置 www 目录权限 (www-data)"
     echo -e "${RED}0.${NC} 退出"
     echo -e "${BLUE}================================${NC}"
 }
@@ -220,6 +221,41 @@ laravel_cache_clear() {
     fi
 }
 
+# 设置 www 目录权限为 www-data 用户
+set_www_permissions() {
+    local www_path="../www"
+
+    echo -e "\n${YELLOW}正在设置 www 目录权限...${NC}"
+    echo -e "${PURPLE}目标路径: ${www_path}${NC}"
+    echo -e "${PURPLE}权限设置: UID:GID 33:33 (www-data)${NC}"
+
+    # 检查目录是否存在
+    if [[ ! -d "$www_path" ]]; then
+        echo -e "${RED}✗ 错误: www 目录不存在 ($www_path)${NC}"
+        return 1
+    fi
+
+    # 显示当前权限信息
+    echo -e "\n${CYAN}当前权限信息：${NC}"
+    ls -la "$www_path" | head -5
+
+    # 执行权限设置命令
+    echo -e "\n${YELLOW}执行命令: chown -R 33:33 $www_path${NC}"
+    if chown -R 33:33 "$www_path"; then
+        echo -e "${GREEN}✓ www 目录权限设置成功${NC}"
+
+        # 显示设置后的权限信息
+        echo -e "\n${CYAN}设置后权限信息：${NC}"
+        ls -la "$www_path" | head -5
+
+        echo -e "\n${GREEN}权限设置完成！Laravel 应用现在应该可以正常访问文件了。${NC}"
+    else
+        echo -e "${RED}✗ www 目录权限设置失败${NC}"
+        echo -e "${YELLOW}提示: 可能需要 sudo 权限来执行此操作${NC}"
+        return 1
+    fi
+}
+
 # 重新构建并重启服务
 rebuild_and_restart() {
     echo -e "\n${YELLOW}正在重新构建并重启服务...${NC}"
@@ -269,7 +305,7 @@ check_env_file
 # 主循环
 while true; do
     show_menu
-    echo -n -e "${CYAN}请输入选项 (0-9, a-c): ${NC}"
+    echo -n -e "${CYAN}请输入选项 (0-9, a-d): ${NC}"
     read -r choice
 
     case $choice in
@@ -293,8 +329,8 @@ while true; do
         4)
             if dc ps caddy | grep -q "Up"; then
                 echo -e "\n${YELLOW}正在进入 Caddy 容器...${NC}"
-                echo -e "${PURPLE}命令: dc exec caddy bash${NC}"
-                dc exec caddy bash
+                echo -e "${PURPLE}命令: dc exec caddy sh${NC}"
+                dc exec caddy sh
             else
                 echo -e "\n${RED}错误: Caddy 服务未运行，请先启动服务 (选项1)${NC}"
             fi
@@ -340,12 +376,17 @@ while true; do
                 rebuild_and_restart
             fi
             ;;
+        d|D)
+            if confirm_dangerous_operation "设置 www 目录权限为 www-data" "将修改 www 目录及其所有子文件/目录的所有权，这可能影响文件访问权限"; then
+                set_www_permissions
+            fi
+            ;;
         0)
             echo -e "\n${GREEN}再见！${NC}"
             exit 0
             ;;
         *)
-            echo -e "\n${RED}无效选项，请输入 0-9, a-c${NC}"
+            echo -e "\n${RED}无效选项，请输入 0-9, a-d${NC}"
             ;;
     esac
 
