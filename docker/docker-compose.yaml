@@ -30,7 +30,9 @@ services:
       - PHP_POST_MAX_SIZE=${PHP_POST_MAX_SIZE}
       - PHP_SESSION_COOKIE_SECURE=${PHP_SESSION_COOKIE_SECURE}
       - PHP_UPLOAD_MAX_FILE_SIZE=${PHP_UPLOAD_MAX_FILE_SIZE}
+      - APP_ENV=${APP_ENV}
+      - APP_DEBUG=${APP_DEBUG}
     restart: always
     privileged: true
     ports:
-      - ${NGINX_PORT}:80
+      - ${NGINX_PORT}:8080
