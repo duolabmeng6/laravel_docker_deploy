@@ -1,5 +1,5 @@
 
-FROM serversideup/php:8.4-fpm-nginx AS base
+FROM registry.cn-hangzhou.aliyuncs.com/llcache/php:8.4-fpm-nginx AS base
 
 # FROM base AS development
 # USER root
