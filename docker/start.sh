@@ -223,15 +223,21 @@ laravel_cache_clear() {
 
 # 设置 www 目录权限为 www-data 用户
 set_www_permissions() {
-    local www_path="../www"
+    local www_path="./www"
+    local abs_path="$(cd "$www_path" 2>/dev/null && pwd)"
 
     echo -e "\n${YELLOW}正在设置 www 目录权限...${NC}"
     echo -e "${PURPLE}目标路径: ${www_path}${NC}"
+    if [[ -n "$abs_path" ]]; then
+        echo -e "${PURPLE}绝对路径: ${abs_path}${NC}"
+    fi
     echo -e "${PURPLE}权限设置: UID:GID 33:33 (www-data)${NC}"
 
     # 检查目录是否存在
     if [[ ! -d "$www_path" ]]; then
-        echo -e "${RED}✗ 错误: www 目录不存在 ($www_path)${NC}"
+        echo -e "${RED}✗ 错误: www 目录不存在${NC}"
+        echo -e "${YELLOW}当前工作目录: $(pwd)${NC}"
+        echo -e "${YELLOW}查找路径: $www_path${NC}"
         return 1
     fi
 
