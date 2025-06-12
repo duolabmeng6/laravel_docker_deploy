@@ -1,5 +1,14 @@
-
 FROM registry.cn-hangzhou.aliyuncs.com/llcache/serversideup-php:8.4-fpm-nginx AS base
+# 安装php扩展
+# USER root
+# RUN rm -f /etc/apt/sources.list.d/* && \
+#     echo "deb http://mirrors.aliyun.com/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+#     echo "deb http://mirrors.aliyun.com/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+#     echo "deb http://mirrors.aliyun.com/debian/ bookworm-backports main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+#     echo "deb http://mirrors.aliyun.com/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+#     install-php-extensions gd 
+# USER www-data
+
 
 # FROM base AS development
 # USER root
